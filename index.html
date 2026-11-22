@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SenZ OSINT Tools - By SenZProject</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --pink:#ff2e88;
+    --cyan:#00f0ff;
+    --purple:#9d4edd;
+    --dark:#0a0a1a;
+    --dark2:#12122b;
+    --glass:rgba(255,255,255,0.06);
+  }
+  body{
+    font-family:'Rajdhani',sans-serif;
+    background:var(--dark);
+    color:#eaeaff;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* Anime background gradient + particles */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,46,136,0.35), transparent 40%),
+      radial-gradient(circle at 85% 15%, rgba(0,240,255,0.30), transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(157,78,221,0.35), transparent 45%),
+      linear-gradient(135deg,#0a0a1a 0%,#12122b 50%,#1a0a2a 100%);
+    z-index:-2;
+  }
+  body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(2px 2px at 120px 90px, #00f0ff, transparent),
+      radial-gradient(1px 1px at 200px 150px, #ff2e88, transparent),
+      radial-gradient(1.5px 1.5px at 300px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 400px 200px, #9d4edd, transparent),
+      radial-gradient(2px 2px at 500px 120px, #00f0ff, transparent),
+      radial-gradient(1px 1px at 600px 300px, #fff, transparent);
+    background-repeat:repeat;
+    background-size:650px 350px;
+    opacity:0.6;
+    z-index:-1;
+    animation:twinkle 4s infinite alternate;
+  }
+  @keyframes twinkle{ from{opacity:0.3} to{opacity:0.8} }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-track{background:#0a0a1a}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--pink),var(--purple));border-radius:4px}
+
+  /* ========== LOGIN ========== */
+  #loginScreen{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:20px;
+  }
+  .login-card{
+    width:100%; max-width:420px;
+    background:var(--glass);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:24px;
+    padding:40px 32px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(255,46,136,0.2);
+    text-align:center;
+    animation:fadeUp .8s ease;
+  }
+  @keyframes fadeUp{ from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .anime-avatar{
+    width:110px;height:110px;margin:0 auto 20px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--pink),var(--cyan));
+    display:flex;align-items:center;justify-content:center;
+    font-size:60px;
+    box-shadow:0 0 40px rgba(0,240,255,0.5);
+    animation:float 3s ease-in-out infinite;
+    border:3px solid rgba(255,255,255,0.3);
+  }
+  @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .login-card h1{
+    font-family:'Orbitron',sans-serif;
+    font-size:26px;font-weight:900;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple));
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:6px;
+    letter-spacing:1px;
+  }
+  .login-card .sub{font-size:13px;color:#9aa0c0;margin-bottom:28px;letter-spacing:2px}
+  .input-group{margin-bottom:18px;text-align:left}
+  .input-group label{font-size:13px;color:#b0b5d8;margin-bottom:6px;display:block;letter-spacing:1px;font-weight:600}
+  .input-group input{
+    width:100%;padding:13px 16px;
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:12px;color:#fff;font-size:15px;
+    font-family:'Rajdhani',sans-serif;font-weight:600;
+    outline:none;transition:.3s;
+  }
+  .input-group input:focus{border-color:var(--cyan);box-shadow:0 0 15px rgba(0,240,255,0.4);background:rgba(0,240,255,0.05)}
+  .btn{
+    width:100%;padding:14px;
+    background:linear-gradient(90deg,var(--pink),var(--purple));
+    border:none;border-radius:12px;color:#fff;
+    font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;
+    letter-spacing:2px;cursor:pointer;transition:.3s;
+    box-shadow:0 8px 25px rgba(255,46,136,0.4);
+    margin-top:8px;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(255,46,136,0.6)}
+  .btn:active{transform:translateY(0)}
+  .hint{margin-top:20px;font-size:12px;color:#7a80a0;line-height:1.8}
+  .hint b{color:var(--cyan)}
+  .err{color:#ff4d6d;font-size:13px;margin-top:10px;min-height:18px;font-weight:600}
+
+  /* ========== APP ========== */
+  #app{display:none;min-height:100vh}
+  /* Sidebar */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:250px;
+    background:rgba(10,10,26,0.85);
+    backdrop-filter:blur(20px);
+    border-right:1px solid rgba(255,255,255,0.1);
+    padding:24px 16px;z-index:50;
+    transition:transform .3s;overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:20px}
+  .brand-icon{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--pink),var(--cyan));
+    display:flex;align-items:center;justify-content:center;font-size:22px;
+    box-shadow:0 0 20px rgba(0,240,255,0.4);
+  }
+  .brand-text{font-family:'Orbitron';font-weight:900;font-size:15px;line-height:1.2}
+  .brand-text small{display:block;font-size:9px;color:var(--cyan);letter-spacing:1px;font-family:'Rajdhani'}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 14px;border-radius:12px;cursor:pointer;
+    color:#a0a5c8;font-weight:600;font-size:14.5px;
+    margin-bottom:4px;transition:.25s;letter-spacing:.5px;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.06);color:#fff}
+  .nav-item.active{
+    background:linear-gradient(90deg,rgba(255,46,136,0.25),rgba(0,240,255,0.15));
+    color:#fff;border-left:3px solid var(--pink);
+    box-shadow:inset 0 0 20px rgba(255,46,136,0.1);
+  }
+  .nav-item .ico{font-size:18px;width:22px;text-align:center}
+
+  .user-box{
+    margin-top:20px;padding:14px;border-radius:14px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;gap:10px;
+  }
+  .user-box .ava{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,var(--cyan),var(--purple));
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .user-box .info{flex:1;min-width:0}
+  .user-box .info b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .user-box .info span{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px}
+  .logout-btn{
+    margin-top:12px;width:100%;padding:10px;
+    background:rgba(255,46,136,0.15);color:#ff6ba3;
+    border:1px solid rgba(255,46,136,0.4);border-radius:10px;
+    cursor:pointer;font-family:'Rajdhani';font-weight:700;letter-spacing:1px;
+    transition:.25s;font-size:13px;
+  }
+  .logout-btn:hover{background:rgba(255,46,136,0.3);color:#fff}
+
+  /* Main */
+  .main{margin-left:250px;padding:26px 28px 60px;min-height:100vh}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:26px;flex-wrap:wrap;gap:14px;
+  }
+  .topbar h2{
+    font-family:'Orbitron';font-size:24px;font-weight:700;
+    background:linear-gradient(90deg,#fff,var(--cyan));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:1px;
+  }
+  .topbar .clock{
+    font-family:'Orbitron';font-size:13px;color:var(--cyan);
+    background:rgba(0,240,255,0.08);padding:8px 16px;border-radius:20px;
+    border:1px solid rgba(0,240,255,0.3);letter-spacing:2px;
+  }
+  .burger{display:none;background:var(--glass);border:1px solid rgba(255,255,255,0.15);color:#fff;
+    width:42px;height:42px;border-radius:10px;font-size:20px;cursor:pointer}
+
+  /* Tools grid */
+  .tools-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:18px;
+  }
+  .tool-card{
+    background:var(--glass);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:18px;padding:22px;
+    cursor:pointer;transition:.3s;position:relative;overflow:hidden;
+  }
+  .tool-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan));
+    transform:scaleX(0);transform-origin:left;transition:.4s;
+  }
+  .tool-card:hover::before{transform:scaleX(1)}
+  .tool-card:hover{transform:translateY(-6px);border-color:rgba(0,240,255,0.4);box-shadow:0 15px 40px rgba(0,0,0,0.5),0 0 30px rgba(0,240,255,0.15)}
+  .tool-card .t-icon{
+    width:52px;height:52px;border-radius:14px;font-size:26px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+    background:linear-gradient(135deg,rgba(255,46,136,0.25),rgba(0,240,255,0.2));
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  .tool-card h3{font-family:'Orbitron';font-size:15px;margin-bottom:6px;letter-spacing:.5px}
+  .tool-card p{font-size:13px;color:#9098c0;line-height:1.5}
+  .tool-card .arrow{
+    position:absolute;right:18px;bottom:18px;font-size:18px;color:var(--cyan);
+    opacity:0;transition:.3s;
+  }
+  .tool-card:hover .arrow{opacity:1;transform:translateX(4px)}
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(5,5,15,0.85);backdrop-filter:blur(8px);
+    z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+    overflow-y:auto;
+  }
+  .modal-overlay.show{display:flex}
+  .modal{
+    width:100%;max-width:680px;background:linear-gradient(160deg,#15152f,#0d0d20);
+    border:1px solid rgba(0,240,255,0.3);border-radius:22px;padding:28px;
+    box-shadow:0 25px 80px rgba(0,0,0,0.7),0 0 60px rgba(0,240,255,0.15);
+    animation:fadeUp .4s ease;max-height:92vh;overflow-y:auto;
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .modal-head h3{font-family:'Orbitron';font-size:19px;color:#fff;display:flex;align-items:center;gap:10px}
+  .modal-head h3 .t-icon{width:38px;height:38px;font-size:19px;margin:0}
+  .close-x{background:rgba(255,255,255,0.08);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;transition:.2s}
+  .close-x:hover{background:var(--pink)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:#b0b5d8;margin-bottom:6px;font-weight:600;letter-spacing:.5px}
+  .field input,.field select{
+    width:100%;padding:12px 14px;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;
+    font-family:'Rajdhani';font-size:15px;font-weight:600;outline:none;transition:.2s;
+  }
+  .field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,240,255,0.3)}
+  .field select option{background:#12122b}
+  .run-btn{
+    width:100%;padding:13px;margin-top:6px;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));
+    border:none;border-radius:11px;color:#fff;font-family:'Orbitron';
+    font-weight:700;letter-spacing:2px;cursor:pointer;font-size:14px;
+    box-shadow:0 8px 25px rgba(0,240,255,0.3);transition:.3s;
+  }
+  .run-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,240,255,0.5)}
+  .result{
+    margin-top:18px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,240,255,0.25);
+    border-radius:12px;padding:16px;font-size:14px;line-height:1.7;
+    white-space:pre-wrap;word-break:break-word;min-height:60px;
+    font-family:'Rajdhani';color:#d5daf5;display:none;
+  }
+  .result.show{display:block;animation:fadeUp .3s}
+  .result .ok{color:#3dffa0;font-weight:700}
+  .result .warn{color:#ffd93d;font-weight:700}
+  .result .bad{color:#ff4d6d;font-weight:700}
+  .result .lbl{color:var(--cyan);font-weight:700}
+  .loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:26px;right:26px;z-index:300;
+    background:linear-gradient(90deg,var(--pink),var(--purple));
+    color:#fff;padding:14px 22px;border-radius:12px;font-weight:700;
+    box-shadow:0 10px 40px rgba(255,46,136,0.5);letter-spacing:.5px;
+    transform:translateY(120px);transition:.4s;font-size:14px;
+  }
+  .toast.show{transform:translateY(0)}
+
+  .footer{text-align:center;padding:26px 0 10px;color:#6a7098;font-size:13px;letter-spacing:1px}
+  .footer b{background:linear-gradient(90deg,var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Orbitron'}
+
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.open{transform:translateX(0)}
+    .main{margin-left:0;padding:20px 16px 60px}
+    .burger{display:block}
+    .topbar{gap:10px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN SCREEN ========== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="anime-avatar">🌸</div>
+    <h1>SENZ OSINT</h1>
+    <div class="sub">TOOLS &amp; RECON SYSTEM</div>
+    <div class="input-group">
+      <label>USERNAME</label>
+      <input type="text" id="loginUser" placeholder="Masukkan username..." autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label>PASSWORD</label>
+      <input type="password" id="loginPass" placeholder="Masukkan password..." autocomplete="off">
+    </div>
+    <button class="btn" onclick="doLogin()">MASUK ➜</button>
+    <div class="err" id="loginErr"></div>
+    <div class="hint">
+      <b>Admin</b> : admin / admin123<br>
+      <b>User</b> &nbsp;: user / user123
+    </div>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">SENZ OSINT<small>by SenZProject</small></div>
+    </div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="ico">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('tools',this)">
+      <span class="ico">🧰</span> OSINT Tools
+    </div>
+    <div class="nav-item" onclick="showPage('rat',this)">
+      <span class="ico">🖥️</span> RAT Panel
+    </div>
+    <div class="nav-item" onclick="showPage('admin',this)" id="navAdmin" style="display:none">
+      <span class="ico">🛡️</span> Admin Panel
+    </div>
+    <div class="nav-item" onclick="showPage('about',this)">
+      <span class="ico">💠</span> About
+    </div>
+
+    <div class="user-box">
+      <div class="ava" id="userAva">👤</div>
+      <div class="info">
+        <b id="userName">-</b>
+        <span id="userRole">-</span>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">⏻ LOGOUT</button>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="burger" onclick="toggleSidebar()">☰</button>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <div class="clock" id="clock">00:00:00</div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page">
+      <div class="tools-grid">
+        <div class="tool-card" onclick="openTool('ip')">
+          <div class="t-icon">🌐</div>
+          <h3>IP Lookup</h3>
+          <p>Lacak informasi lokasi & provider dari alamat IP.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('domain')">
+          <div class="t-icon">🔍</div>
+          <h3>Domain Recon</h3>
+          <p>Analisa subdomain, DNS record & info domain target.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('username')">
+          <div class="t-icon">👤</div>
+          <h3>Username Search</h3>
+          <p>Cari keberadaan username di berbagai platform sosial.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('email')">
+          <div class="t-icon">📧</div>
+          <h3>Email Recon</h3>
+          <p>Validasi email, MX record & potensi kebocoran data.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('phone')">
+          <div class="t-icon">📱</div>
+          <h3>Phone Tracker</h3>
+          <p>Identifikasi operator, negara & format nomor telepon.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('hash')">
+          <div class="t-icon">#️⃣</div>
+          <h3>Hash Generator</h3>
+          <p>Generate checksum MD5, SHA1, SHA256 dari teks.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('port')">
+          <div class="t-icon">🔌</div>
+          <h3>Port Scanner</h3>
+          <p>Simulasi scan port terbuka pada host target.</p>
+          <span class="arrow">➜</span>
+        </div>
+        <div class="tool-card" onclick="openTool('whois')">
+          <div class="t-icon">📋</div>
+          <h3>Whois Lookup</h3>
+          <p>Informasi registrasi domain & pemilik.</p>
+          <span class="arrow">➜</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TOOLS ===== -->
+    <div id="page-tools" class="page" style="display:none">
+      <div class="tools-grid" id="toolsGrid"></div>
+    </div>
+
+    <!-- ===== RAT ===== -->
+    <div id="page-rat" class="page" style="display:none">
+      <div class="tool-card" style="cursor:default;max-width:600px">
+        <div class="t-icon">🖥️</div>
+        <h3>RAT Panel (Remote Admin Tool)</h3>
+        <p style="margin-bottom:16px">Kelola & pantau client yang terhubung. Mode simulasi lokal real-time.</p>
+        <button class="run-btn" onclick="renderRAT()">🔄 REFRESH CLIENT</button>
+        <div class="result show" id="ratResult"></div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN ===== -->
+    <div id="page-admin" class="page" style="display:none">
+      <div class="tools-grid">
+        <div class="tool-card" style="cursor:default">
+          <div class="t-icon">👥</div>
+          <h3>Manajemen User</h3>
+          <p style="margin-bottom:14px">Total user terdaftar & role.</p>
+          <div class="result show" id="adminUsers"></div>
+        </div>
+        <div class="tool-card" style="cursor:default">
+          <div class="t-icon">📊</div>
+          <h3>Statistik Tools</h3>
+          <p style="margin-bottom:14px">Riwayat penggunaan tools hari ini.</p>
+          <div class="result show" id="adminStats"></div>
+        </div>
+        <div class="tool-card" style="cursor:default">
+          <div class="t-icon">⚙️</div>
+          <h3>System Info</h3>
+          <p style="margin-bottom:14px">Informasi environment & sistem.</p>
+          <div class="result show" id="adminSys"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABOUT ===== -->
+    <div id="page-about" class="page" style="display:none">
+      <div class="tool-card" style="cursor:default;max-width:640px">
+        <div class="t-icon">💠</div>
+        <h3>SENZ OSINT TOOLS</h3>
+        <p style="margin:14px 0;line-height:1.8">
+          Kumpulan tools Open Source Intelligence yang dirancang untuk melakukan recon,
+          analisa target, dan pengumpulan informasi secara cepat & efisien.
+          Dibuat dengan tampilan anime aesthetic dan berjalan sepenuhnya tanpa API eksternal.
+        </p>
+        <p style="line-height:1.9;color:#b0b5d8">
+     
